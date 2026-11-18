@@ -1,0 +1,15 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+/* Routed layout is a sibling of router-outlet; don't let the outlet affect layout. */
+:host > router-outlet {
+  display: none;
+}
+
+.app-boot {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+}

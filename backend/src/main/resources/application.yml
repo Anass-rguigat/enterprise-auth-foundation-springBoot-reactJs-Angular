@@ -1,0 +1,146 @@
+spring:
+  application:
+    name: enterprise-auth-foundation
+  profiles:
+    default: local
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:auth_foundation}
+    username: ${DB_APP_USER:auth_app}
+    password: ${DB_APP_PASSWORD:}
+    hikari:
+      pool-name: app-pool
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    # Flyway runs as the migration/owner role (table owner), not the runtime app role.
+    user: ${DB_OWNER_USER:auth_owner}
+    password: ${DB_OWNER_PASSWORD:}
+    baseline-on-migrate: false
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    properties:
+      mail.smtp.auth: false
+      mail.smtp.starttls.enable: false
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+  health:
+    db:
+      enabled: true
+    mail:
+      enabled: false
+
+app:
+  jwt:
+    issuer: enterprise-auth-foundation
+    audience: enterprise-auth-foundation-api
+    access-token-ttl: 5m
+    refresh-token-ttl: 7d
+    clock-skew: 30s
+    key-id: local-dev-1
+  cookies:
+    access-token-name: access_token
+    refresh-token-name: refresh_token
+    secure: false
+    same-site: Lax
+    path: /
+  csrf:
+    cookie-name: XSRF-TOKEN
+    header-name: X-XSRF-TOKEN
+  cors:
+    allowed-origins:
+      - http://localhost:4200
+      - http://localhost:5173
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+      - OPTIONS
+    allowed-headers:
+      - Authorization
+      - Content-Type
+      - X-XSRF-TOKEN
+      - X-Correlation-Id
+    exposed-headers:
+      - X-Correlation-Id
+    allow-credentials: true
+    max-age-seconds: 3600
+  security:
+    headers:
+      hsts-enabled: false
+      hsts-max-age-seconds: 31536000
+      hsts-include-subdomains: true
+  bootstrap:
+    enabled: ${BOOTSTRAP_ENABLED:false}
+    email: ${BOOTSTRAP_ADMIN_EMAIL:}
+    password: ${BOOTSTRAP_ADMIN_PASSWORD:}
+    first-name: ${BOOTSTRAP_ADMIN_FIRST_NAME:Bootstrap}
+    last-name: ${BOOTSTRAP_ADMIN_LAST_NAME:Admin}
+  invitation:
+    token-ttl: 72h
+    accept-base-url: ${INVITATION_ACCEPT_BASE_URL:http://localhost:5173/invite/accept}
+  password-reset:
+    token-ttl: ${PASSWORD_RESET_TOKEN_TTL:10m}
+    reset-base-url: ${PASSWORD_RESET_BASE_URL:http://localhost:5173/reset-password}
+  email-verification:
+    token-ttl: ${EMAIL_VERIFY_TOKEN_TTL:10m}
+    verify-base-url: ${EMAIL_VERIFY_BASE_URL:http://localhost:5173/verify-email}
+  email:
+    outbox:
+      current-kek-id: ${EMAIL_OUTBOX_KEK_ID:local-1}
+      mail-from: ${MAIL_FROM:noreply@localhost}
+      max-attempts: 8
+      poll-interval-ms: 5000
+      batch-size: 20
+      keks:
+        local-1: ${EMAIL_OUTBOX_KEK:}
+  audit:
+    retention-days: ${AUDIT_RETENTION_DAYS:365}
+    retention-enabled: ${AUDIT_RETENTION_ENABLED:false}
+    retention-interval-ms: ${AUDIT_RETENTION_INTERVAL_MS:86400000}
+    retention-datasource:
+      url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:auth_foundation}
+      username: ${DB_RETENTION_USER:auth_retention}
+      password: ${DB_RETENTION_PASSWORD:}
+  mfa:
+    issuer: ${MFA_ISSUER:enterprise-auth-foundation}
+    challenge-ttl: 5m
+    enrollment-ttl: 15m
+    totp-window: 1
+    recovery-code-count: 10
+    max-verify-attempts-per-window: 10
+    verify-attempt-window: 15m
+    purge-interval-ms: 300000
+    crypto:
+      current-kek-id: ${MFA_SECRET_KEK_ID:local-1}
+      keks:
+        local-1: ${MFA_SECRET_KEK:}
+
+logging:
+  level:
+    root: INFO
+    com.company.application: INFO
+  pattern:
+    level: "%5p [${spring.application.name:},%X{correlationId:-}]"

@@ -1,0 +1,40 @@
+.auth-form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.auth-form__error {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: 0.875rem;
+}
+
+.auth-form__ok {
+  margin: 0;
+  color: var(--color-success);
+  font-size: 0.875rem;
+}
+
+.auth-form__links {
+  margin: var(--space-4) 0 0;
+  font-size: 0.875rem;
+}
+
+.auth-form__links a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.auth-form__links a:hover {
+  text-decoration: underline;
+}
+
+.email-change-form {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 24rem;
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}

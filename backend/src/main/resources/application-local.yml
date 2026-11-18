@@ -1,0 +1,18 @@
+# Local / Docker Compose profile. No production secrets here.
+spring:
+  config:
+    activate:
+      on-profile: local
+
+server:
+  forward-headers-strategy: framework
+
+management:
+  endpoint:
+    health:
+      show-details: when_authorized
+
+logging:
+  level:
+    com.company.application: DEBUG
+    org.flywaydb: INFO

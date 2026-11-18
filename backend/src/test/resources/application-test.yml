@@ -1,0 +1,33 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  task:
+    scheduling:
+      enabled: false
+
+app:
+  cors:
+    allowed-origins:
+      - http://localhost:4200
+      - http://localhost:5173
+      - http://localhost
+  csrf:
+    cookie-name: XSRF-TOKEN
+    header-name: X-XSRF-TOKEN
+  security:
+    headers:
+      hsts-enabled: false
+  bootstrap:
+    enabled: false
+  invitation:
+    accept-base-url: http://localhost:5173/invite/accept
+  email:
+    outbox:
+      current-kek-id: test-1
+      keks:
+        # 32 zero bytes — test-only KEK, never use in production
+        test-1: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+
+logging:
+  level:
+    com.company.application: INFO

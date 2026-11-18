@@ -1,0 +1,32 @@
+# Production profile. Secrets must come from environment / secret manager.
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+management:
+  endpoint:
+    health:
+      show-details: never
+
+app:
+  cookies:
+    secure: true
+    access-token-name: __Host-access
+    refresh-token-name: __Host-refresh
+    mfa-challenge-token-name: __Host-mfa_challenge
+    # __Host- cookies require Path=/
+    mfa-challenge-path: /
+  csrf:
+    cookie-name: __Host-XSRF-TOKEN
+  cors:
+    allowed-origins:
+      - ${CORS_ALLOWED_ORIGIN:https://app.example.com}
+  security:
+    headers:
+      hsts-enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.company.application: INFO

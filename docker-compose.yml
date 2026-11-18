@@ -1,0 +1,132 @@
+services:
+  db:
+    image: postgres:16
+    container_name: eaf-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-auth_foundation}
+      POSTGRES_USER: ${POSTGRES_USER:-auth_bootstrap}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      DB_OWNER_USER: ${DB_OWNER_USER:-auth_owner}
+      DB_OWNER_PASSWORD: ${DB_OWNER_PASSWORD:?Set DB_OWNER_PASSWORD in .env}
+      DB_APP_USER: ${DB_APP_USER:-auth_app}
+      DB_APP_PASSWORD: ${DB_APP_PASSWORD:?Set DB_APP_PASSWORD in .env}
+      DB_RETENTION_USER: ${DB_RETENTION_USER:-auth_retention}
+      DB_RETENTION_PASSWORD: ${DB_RETENTION_PASSWORD:?Set DB_RETENTION_PASSWORD in .env}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - eaf-net
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: eaf-mailpit
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    networks:
+      - eaf-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: eaf-backend
+    depends_on:
+      db:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+      SERVER_PORT: 8080
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-auth_foundation}
+      DB_APP_USER: ${DB_APP_USER:-auth_app}
+      DB_APP_PASSWORD: ${DB_APP_PASSWORD:?Set DB_APP_PASSWORD in .env}
+      DB_OWNER_USER: ${DB_OWNER_USER:-auth_owner}
+      DB_OWNER_PASSWORD: ${DB_OWNER_PASSWORD:?Set DB_OWNER_PASSWORD in .env}
+      DB_RETENTION_USER: ${DB_RETENTION_USER:-auth_retention}
+      DB_RETENTION_PASSWORD: ${DB_RETENTION_PASSWORD:?Set DB_RETENTION_PASSWORD in .env}
+      AUDIT_RETENTION_ENABLED: ${AUDIT_RETENTION_ENABLED:-false}
+      AUDIT_RETENTION_DAYS: ${AUDIT_RETENTION_DAYS:-365}
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      MAIL_FROM: ${MAIL_FROM:-noreply@localhost}
+      EMAIL_OUTBOX_KEK: ${EMAIL_OUTBOX_KEK:-}
+      EMAIL_OUTBOX_KEK_ID: ${EMAIL_OUTBOX_KEK_ID:-local-1}
+      BOOTSTRAP_ENABLED: ${BOOTSTRAP_ENABLED:-false}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
+      INVITATION_ACCEPT_BASE_URL: ${INVITATION_ACCEPT_BASE_URL:-http://localhost:5173/invite/accept}
+      PASSWORD_RESET_BASE_URL: ${PASSWORD_RESET_BASE_URL:-http://localhost:5173/reset-password}
+      EMAIL_VERIFY_BASE_URL: ${EMAIL_VERIFY_BASE_URL:-http://localhost:5173/verify-email}
+      PASSWORD_RESET_TOKEN_TTL: ${PASSWORD_RESET_TOKEN_TTL:-10m}
+      EMAIL_VERIFY_TOKEN_TTL: ${EMAIL_VERIFY_TOKEN_TTL:-10m}
+      JAVA_OPTS: ${JAVA_OPTS:-}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    networks:
+      - eaf-net
+
+  # Option 1 — Angular SPA (do not run with react profile for auth testing)
+  angular-app:
+    profiles: ["angular"]
+    build:
+      context: ./frontend/angular-app
+      dockerfile: Dockerfile
+    container_name: eaf-angular
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      NG_API_BASE_URL: http://localhost:${BACKEND_PORT:-8080}
+    ports:
+      - "${ANGULAR_PORT:-4200}:4200"
+    networks:
+      - eaf-net
+
+  # Option 2 — React SPA (do not run with angular profile for auth testing)
+  react-app:
+    profiles: ["react"]
+    build:
+      context: ./frontend/react-app
+      dockerfile: Dockerfile
+    container_name: eaf-react
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      VITE_API_BASE_URL: http://localhost:${BACKEND_PORT:-8080}
+    ports:
+      - "${REACT_PORT:-5173}:5173"
+    networks:
+      - eaf-net
+
+volumes:
+  pgdata:
+
+networks:
+  eaf-net:
+    driver: bridge

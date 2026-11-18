@@ -1,0 +1,33 @@
+<ui-page-header
+  title="API status"
+  subtitle="Live check against GET /api/v1/meta/info (Phase marker)."
+>
+  <ui-button variant="secondary" type="button" (click)="reload()">Refresh</ui-button>
+</ui-page-header>
+
+@if (loading()) {
+  <ui-loading-state label="Contacting backend…" />
+} @else if (error(); as err) {
+  <ui-error-state title="Backend unreachable" [message]="err">
+    <ui-button variant="secondary" type="button" (click)="reload()">Retry</ui-button>
+  </ui-error-state>
+} @else if (meta(); as info) {
+  <dl class="meta">
+    <div>
+      <dt>Application</dt>
+      <dd>{{ info.application }}</dd>
+    </div>
+    <div>
+      <dt>Status</dt>
+      <dd>{{ info.status }}</dd>
+    </div>
+    <div>
+      <dt>Phase</dt>
+      <dd>{{ info.phase }}</dd>
+    </div>
+    <div>
+      <dt>API base</dt>
+      <dd>{{ apiBase }}</dd>
+    </div>
+  </dl>
+}

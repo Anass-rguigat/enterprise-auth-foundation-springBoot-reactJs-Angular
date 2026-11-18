@@ -1,0 +1,7 @@
+@if (!auth.initialized()) {
+  <div class="app-boot">
+    <ui-loading-state label="Starting session…" />
+  </div>
+} @else {
+  <router-outlet />
+}

@@ -1,0 +1,45 @@
+# Secrets and local env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Keys and credentials
+**/keys/
+**/*.pem
+**/*.key
+**/credentials*.json
+secrets/
+
+# Maven / Java
+backend/target/
+*.class
+*.jar
+*.war
+*.ear
+hs_err_pid*
+replay_pid*
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs / temp
+*.log
+logs/
+tmp/
+temp/
+
+# Test / coverage
+.coverage/
+coverage/
+.jacoco/
